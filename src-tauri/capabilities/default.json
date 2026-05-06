@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Demo: invoke + window + dialog",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "dialog:default",
+    {
+      "identifier": "fs:default",
+      "allow": [
+        { "path": "$SAVE/**" }
+      ]
+    }
+  ]
+}

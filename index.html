@@ -1,0 +1,982 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>财务报表助手</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body class="app-body">
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="主导航">
+        <div class="sidebar-brand">
+          <span class="sidebar-brand__mark" aria-hidden="true"></span>
+          <div>
+            <div class="sidebar-brand__title">财务报表助手</div>
+            <div class="sidebar-brand__sub">本地 · MySQL</div>
+          </div>
+        </div>
+        <nav class="sidebar-nav" role="navigation">
+          <button type="button" class="nav-item is-active" data-panel="overview" data-nav>
+            <span class="nav-item__icon" aria-hidden="true">◆</span>
+            概览
+          </button>
+          <button type="button" class="nav-item" data-panel="members" data-nav>
+            <span class="nav-item__icon" aria-hidden="true">▥</span>
+            会员管理
+          </button>
+          <button type="button" class="nav-item" data-panel="coaches" data-nav>
+            <span class="nav-item__icon" aria-hidden="true">▣</span>
+            教练管理
+          </button>
+          <div class="nav-group">
+            <button type="button" class="nav-item nav-item--parent" data-nav-toggle="reports">
+              <span class="nav-item__icon" aria-hidden="true">▤</span>
+              报表
+              <span class="nav-item__arrow" aria-hidden="true">›</span>
+            </button>
+            <div class="nav-sub" id="nav-sub-reports" hidden>
+              <button type="button" class="nav-item nav-item--child" data-panel="reports" data-nav>
+                <span class="nav-item__dot" aria-hidden="true"></span>
+                报表概览
+              </button>
+              <button type="button" class="nav-item nav-item--child" data-panel="ledger" data-nav>
+                <span class="nav-item__dot" aria-hidden="true"></span>
+                财务月报
+              </button>
+              <button type="button" class="nav-item nav-item--child" data-panel="coach-stats" data-nav>
+                <span class="nav-item__dot" aria-hidden="true"></span>
+                教练统计
+              </button>
+              <button type="button" class="nav-item nav-item--child" data-panel="routine-hours" data-nav>
+                <span class="nav-item__dot" aria-hidden="true"></span>
+                会员课时统计
+              </button>
+              <div class="nav-group">
+                <button type="button" class="nav-item nav-item--parent nav-item--child" data-nav-toggle="routine">
+                  <span class="nav-item__dot" aria-hidden="true"></span>
+                  常规报表
+                  <span class="nav-item__arrow" aria-hidden="true">›</span>
+                </button>
+                <div class="nav-sub" id="nav-sub-routine" hidden>
+                  <button type="button" class="nav-item nav-item--child nav-item--grandchild" data-panel="routine-teaching" data-nav>
+                    <span class="nav-item__dot" aria-hidden="true"></span>
+                    授课日记
+                  </button>
+                  <button type="button" class="nav-item nav-item--child nav-item--grandchild" data-panel="routine-expense" data-nav>
+                    <span class="nav-item__dot" aria-hidden="true"></span>
+                    日常开支
+                  </button>
+                  <button type="button" class="nav-item nav-item--child nav-item--grandchild" data-panel="routine-trial" data-nav>
+                    <span class="nav-item__dot" aria-hidden="true"></span>
+                    体验课
+                  </button>
+                  <button type="button" class="nav-item nav-item--child nav-item--grandchild" data-panel="routine-leave" data-nav>
+                    <span class="nav-item__dot" aria-hidden="true"></span>
+                    请假
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="nav-item" data-panel="import" data-nav>
+            <span class="nav-item__icon" aria-hidden="true">▣</span>
+            导入数据
+          </button>
+          <button type="button" class="nav-item" data-panel="database" data-nav>
+            <span class="nav-item__icon" aria-hidden="true">◇</span>
+            数据连接
+          </button>
+        </nav>
+        <div class="sidebar-foot">
+          <span class="sidebar-foot__hint">Tauri + invoke</span>
+        </div>
+      </aside>
+
+      <div class="main">
+        <header class="main-header">
+          <h1 id="page-title" class="main-header__title">概览</h1>
+          <p id="page-desc" class="main-header__desc">环境与后续功能入口</p>
+        </header>
+
+        <section id="panel-overview" class="panel" data-panel-content="overview">
+          <!-- 工资结构 -->
+          <div class="card">
+            <div class="card__head">
+              <h2 class="card__title" style="margin:0">工资结构</h2>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn--primary btn--sm" id="btn-add-salary">新增</button>
+              </div>
+            </div>
+            <table class="member-table" id="salary-table" style="margin-top:0.75rem">
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th style="width:160px">薪资构成</th>
+                  <th style="width:140px">薪资额度</th>
+                  <th>备注</th>
+                  <th style="width:100px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="salary-tbody">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 激励等级表单 -->
+          <div class="card">
+            <div class="card__head">
+              <h2 class="card__title" style="margin:0">激励等级</h2>
+              <div style="display:flex;gap:8px">
+                <button type="button" class="btn btn--primary btn--sm" id="btn-add-grade">新增</button>
+                <button type="button" class="btn btn--secondary btn--sm" id="btn-save-grade">保存</button>
+              </div>
+            </div>
+            <table class="member-table" id="grade-table" style="margin-top:0.75rem">
+              <thead>
+                <tr>
+                  <th style="width:40px">#</th>
+                  <th style="width:80px">等级</th>
+                  <th style="width:160px">课时范围</th>
+                  <th style="width:120px">工资</th>
+                  <th style="width:120px">绩效比例</th>
+                  <th style="width:80px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="grade-tbody">
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 账务计算公式 -->
+          <div class="card">
+            <div class="card__head">
+              <h2 class="card__title" style="margin:0">账务计算公式</h2>
+              <button type="button" class="btn btn--secondary btn--sm" id="btn-save-formula">保存</button>
+            </div>
+            <textarea id="formula-text" class="input" rows="8" placeholder="输入账务计算公式…" style="width:100%;resize:vertical;margin-top:0.75rem;font-size:0.875rem;line-height:1.7"></textarea>
+          </div>
+
+          <div class="card">
+            <h2 class="card__title">欢迎使用</h2>
+            <p class="card__text">
+              本应用连接本机 <strong>MySQL</strong> 库 <code>financial_reporting</code>，后续将在此完成目录导入、报表与锁表策略。
+            </p>
+            <ul class="checklist">
+              <li>仓库根目录配置 <code>.env</code>（含 <code>MYSQL_PASSWORD</code>）</li>
+              <li>已执行 <code>docs/schema.sql</code></li>
+              <li>开发时使用 <strong>数据连接</strong> 页验证 invoke 与数据库</li>
+            </ul>
+          </div>
+          <div id="shell-banner" class="banner banner--warn is-hidden" role="status"></div>
+        </section>
+
+        <section id="panel-database" class="panel" data-panel-content="database" hidden>
+          <div class="toolbar">
+            <button type="button" class="btn btn--primary" id="btn-ping">测试连接</button>
+            <button type="button" class="btn btn--secondary" id="btn-counts">业务表行数</button>
+            <button type="button" class="btn btn--secondary" id="btn-locks">锁表记录</button>
+          </div>
+          <div class="card card--output">
+            <div class="card__head">
+              <span class="card__title">输出</span>
+              <span id="output-status" class="badge badge--muted">空闲</span>
+            </div>
+            <pre id="out" class="output" aria-live="polite"></pre>
+          </div>
+        </section>
+
+        <section id="panel-import" class="panel" data-panel-content="import" hidden>
+          <!-- 一键批量导入 -->
+          <div class="card" style="margin-bottom:1rem">
+            <h2 class="card__title">📦 一键批量导入</h2>
+            <p class="card__text">
+              选择包含导入模板的<strong>目录</strong>，系统自动识别文件名并匹配对应表进行批量导入。<br>
+              文件命名规范：<code>01_member_会员表.xlsx</code>、<code>02_coach_教练表.xlsx</code>（序号_表名_说明.扩展名）
+            </p>
+            <div class="form-grid">
+              <label class="field">
+                <span class="field__label">模板目录</span>
+                <div class="field__row">
+                  <input type="text" id="batch-import-dir" class="input" placeholder="请点击右侧按钮选择目录" readonly style="flex:1" />
+                  <button type="button" class="btn btn--primary" id="btn-pick-folder">选择目录…</button>
+                </div>
+              </label>
+              <label class="field field--inline">
+                <input type="checkbox" id="batch-has-header" checked />
+                <span>首行为表头</span>
+              </label>
+              <label class="field">
+                <span class="field__label">CSV 分隔符</span>
+                <select id="batch-csv-delim" class="input input--narrow">
+                  <option value="comma">逗号 ,</option>
+                  <option value="tab">制表符 Tab</option>
+                  <option value="semi">分号 ;</option>
+                </select>
+              </label>
+            </div>
+            <div class="toolbar toolbar--footer">
+              <button type="button" class="btn btn--primary" id="btn-run-batch-import">开始批量导入</button>
+              <span id="batch-import-status" class="badge badge--muted">空闲</span>
+            </div>
+          </div>
+
+          <!-- 单表导入 -->
+          <div class="card">
+            <h2 class="card__title">📄 单表导入</h2>
+            <p class="card__text">
+              首行需为<strong>列名</strong>，且与 MySQL 表字段名一致（不区分大小写）。自增主键列可省略。每个文件单独事务；多文件依次执行。
+            </p>
+            <div class="form-grid">
+              <label class="field">
+                <span class="field__label">目标表</span>
+                <div class="field__row">
+                  <select id="import-table" class="input">
+                    <option value="">加载中…</option>
+                  </select>
+                  <button type="button" class="btn btn--secondary" id="btn-refresh-tables">刷新表列表</button>
+                </div>
+              </label>
+              <label class="field">
+                <span class="field__label">已选文件</span>
+                <button type="button" class="btn btn--primary" id="btn-pick-files">选择文件…</button>
+                <ul id="import-file-list" class="file-list" aria-live="polite"></ul>
+              </label>
+              <label class="field field--inline">
+                <input type="checkbox" id="import-has-header" checked />
+                <span>首行为表头</span>
+              </label>
+              <label class="field">
+                <span class="field__label">CSV 分隔符</span>
+                <select id="import-csv-delim" class="input input--narrow">
+                  <option value="comma">逗号 ,</option>
+                  <option value="tab">制表符 Tab</option>
+                  <option value="semi">分号 ;</option>
+                </select>
+              </label>
+              <label class="field">
+                <span class="field__label">xlsx 工作表名（可空，默认第一张）</span>
+                <input type="text" id="import-sheet" class="input" placeholder="留空则使用第一张表" />
+              </label>
+            </div>
+            <div class="toolbar toolbar--footer">
+              <button type="button" class="btn btn--primary" id="btn-run-import">开始导入</button>
+            </div>
+          </div>
+          <div class="card card--output card--import-out">
+            <div class="card__head">
+              <span class="card__title">导入结果</span>
+              <span id="import-status" class="badge badge--muted">空闲</span>
+            </div>
+            <pre id="import-out" class="output"></pre>
+          </div>
+        </section>
+
+        <section id="panel-reports" class="panel" data-panel-content="reports" hidden>
+          <div class="member-toolbar">
+            <button type="button" class="btn btn--primary" id="btn-overview-refresh">刷新数据</button>
+            <span id="overview-status" class="badge badge--muted">—</span>
+          </div>
+
+          <!-- KPI 概览卡片 -->
+          <div class="kpi-row" id="overview-kpi-row">
+            <div class="kpi-item"><div class="kpi-num" id="kpi-total-members">-</div><div class="kpi-label">累计会员</div></div>
+            <div class="kpi-item"><div class="kpi-num" id="kpi-paid-members">-</div><div class="kpi-label">付费会员</div></div>
+            <div class="kpi-item"><div class="kpi-num" id="kpi-active-members">-</div><div class="kpi-label">当前有课时</div></div>
+            <div class="kpi-item"><div class="kpi-num" id="kpi-churn-members">-</div><div class="kpi-label">流失会员</div></div>
+          </div>
+
+          <!-- 图表区域：2列布局 -->
+          <div class="chart-grid">
+            <!-- 会员漏斗 -->
+            <div class="chart-card">
+              <div class="chart-card__title">会员漏斗</div>
+              <canvas id="chart-funnel"></canvas>
+            </div>
+            <!-- 付费课时月趋势 -->
+            <div class="chart-card">
+              <div class="chart-card__title">付费课时月趋势</div>
+              <canvas id="chart-hours-trend"></canvas>
+            </div>
+            <!-- 会员流失分析 -->
+            <div class="chart-card">
+              <div class="chart-card__title">会员流失分析</div>
+              <canvas id="chart-churn"></canvas>
+            </div>
+            <!-- 体验转化分析 -->
+            <div class="chart-card">
+              <div class="chart-card__title">体验转化分析</div>
+              <canvas id="chart-trial"></canvas>
+            </div>
+            <!-- 活动引流分析 -->
+            <div class="chart-card chart-card--full">
+              <div class="chart-card__title">活动引流分析</div>
+              <canvas id="chart-source"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- ====== 教练统计 ====== -->
+        <section id="panel-coach-stats" class="panel" data-panel-content="coach-stats" hidden>
+          <div class="card">
+            <div class="member-toolbar">
+              <label class="field field--inline"><span class="field__label">月份</span><select id="cs-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="cs-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+              <button type="button" class="btn btn--primary" id="btn-cs-load">加载</button>
+              <button type="button" class="btn btn--primary" id="btn-cs-query">查询</button>
+              <button type="button" class="btn btn--secondary" id="btn-cs-export">导出</button>
+              <span id="cs-status" class="badge badge--muted">—</span>
+            </div>
+            <table class="member-table" style="margin-top:0.75rem">
+              <thead>
+                <tr>
+                  <th>教练</th>
+                  <th style="width:100px">总课时数</th>
+                  <th style="width:110px">体验课课时数</th>
+                  <th style="width:120px">非体验课课时数</th>
+                  <th style="width:130px">单独计算课时</th>
+                  <th style="width:130px">非体验课课时费</th>
+                  <th style="width:160px">单独计算课时费</th>
+                  <th style="width:120px">总课时费</th>
+                </tr>
+              </thead>
+              <tbody id="cs-tbody"></tbody>
+            </table>
+            <pre id="cs-out" class="output" hidden></pre>
+          </div>
+        </section>
+
+        <!-- ====== 日常登记 ====== -->
+        <section id="panel-ledger" class="panel" data-panel-content="ledger" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="ledger-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="ledger-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-ledger-load">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-ledger-generate">加载</button>
+            <button type="button" class="btn btn--primary" id="btn-ledger-report">生成月报</button>
+            <button type="button" class="btn btn--secondary" id="btn-ledger-export">导出</button>
+            <span id="ledger-status" class="badge badge--muted">—</span>
+          </div>
+
+          
+
+          <!-- 支出项 -->
+          <div class="ledger-section">
+            <div class="ledger-section__head">
+              <span class="ledger-section__title">支出项</span>
+              <button type="button" class="btn btn--secondary btn--sm" id="btn-exp-add">+ 添加行</button>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table" id="expense-table">
+                <thead>
+                  <tr>
+                    <th style="width:40px">#</th>
+                    <th style="width:80px">分类</th>
+                    <th>人员</th>
+                    <th>事项</th>
+                    <th>描述</th>
+                    <th class="num-col" style="width:110px">金额</th>
+                    <th style="width:50px"></th>
+                  </tr>
+                </thead>
+                <tbody id="expense-tbody"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" style="text-align:left;font-weight:600;padding-left:8px">合计</td>
+                    <td id="expense-sum" class="num-col" style="font-weight:600">0.00</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- 收入项 -->
+          <div class="ledger-section">
+            <div class="ledger-section__head">
+              <span class="ledger-section__title">收入项</span>
+              <button type="button" class="btn btn--secondary btn--sm" id="btn-inc-add">+ 添加行</button>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table" id="income-table">
+                <thead>
+                  <tr>
+                    <th style="width:40px">#</th>
+                    <th style="width:80px">分类</th>
+                    <th>科目</th>
+                    <th>事项</th>
+                    <th>内容</th>
+                    <th class="num-col" style="width:110px">金额</th>
+                    <th style="width:50px"></th>
+                  </tr>
+                </thead>
+                <tbody id="income-tbody"></tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="5" style="text-align:left;font-weight:600;padding-left:8px">合计</td>
+                    <td id="income-sum" class="num-col" style="font-weight:600">0.00</td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- 纯利统计 -->
+          <div class="ledger-section">
+            <div class="ledger-section__head">
+              <span class="ledger-section__title">纯利统计</span>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table">
+                <thead>
+                  <tr>
+                    <th>纯利</th>
+                    <th>总耗课价格</th>
+                    <th>体验课价格</th>
+                    <th>教练工资</th>
+                    <th>现金流支出</th>
+                    <th>退课手续费</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="text" class="input ledger-cell-input" data-field="netProfit" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="totalClassPrice" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="trialClassPrice" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="coachSalary" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="cashOutflow" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="refundFee" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 公司账户 -->
+          <div class="ledger-section">
+            <div class="ledger-section__head">
+              <span class="ledger-section__title">公司账户</span>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table">
+                <thead>
+                  <tr>
+                    <th>公司账户</th>
+                    <th>上月余额</th>
+                    <th>售课金额</th>
+                    <th>其他收入</th>
+                    <th>支出</th>
+                    <th>转入银行卡</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><input type="text" class="input ledger-cell-input" data-field="companyAccount" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="prevBalance" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="courseSales" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="otherIncome" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="expenditure" /></td>
+                    <td><input type="text" class="input ledger-cell-input" data-field="bankTransfer" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <pre id="ledger-out" class="output output--inline"></pre>
+        </section>
+
+        <!-- ====== 会员管理 ====== -->
+        <section id="panel-members" class="panel" data-panel-content="members" hidden>
+          <div class="member-toolbar">
+            <input type="text" id="member-filter-name" class="input" placeholder="会员名称" style="width:120px" />
+            <input type="text" id="member-filter-phone" class="input" placeholder="电话" style="width:120px" />
+            <input type="text" id="member-filter-coach" class="input" placeholder="教练" style="width:100px" />
+            <input type="number" id="member-filter-remain-min" class="input" placeholder="剩余课时≥" style="width:110px" />
+            <input type="number" id="member-filter-remain-max" class="input" placeholder="剩余课时≤" style="width:110px" />
+            <button type="button" class="btn btn--primary" id="btn-member-search">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-member-search-reset">重置</button>
+            <button type="button" class="btn btn--primary" id="btn-member-load">加载导入数据</button>
+            <button type="button" class="btn btn--secondary" id="btn-member-refresh">刷新列表</button>
+            <button type="button" class="btn btn--secondary" id="btn-member-export">导出</button>
+            <span id="member-status" class="badge badge--muted">—</span>
+          </div>
+
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>会员卡名称</th>
+                  <th>电话号码</th>
+                  <th>名称备注</th>
+                  <th>教练</th>
+                  <th>备注</th>
+                  <th class="num-col">剩余课时</th>
+                  <th>流失说明</th>
+                  <th style="width:120px">操作</th>
+                </tr>
+              </thead>
+              <tbody id="member-tbody">
+                <tr><td colspan="12" class="member-empty">加载中…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <pre id="member-out" class="output output--inline"></pre>
+
+          <!-- 弹窗 -->
+          <div id="member-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head">
+                <h2 id="member-modal-title" class="modal-title">新增会员</h2>
+                <button type="button" class="modal-close" id="btn-member-modal-close">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="mf-id" />
+                <div class="form-grid">
+                  <label class="field">
+                    <span class="field__label">会员卡名称 *</span>
+                    <input type="text" id="mf-card-name" class="input" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">电话号码</span>
+                    <input type="text" id="mf-phone" class="input" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">名称备注</span>
+                    <input type="text" id="mf-name-remark" class="input" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">教练</span>
+                    <input type="text" id="mf-coach" class="input" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">备注</span>
+                    <input type="text" id="mf-remark" class="input" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">剩余课时数</span>
+                    <input type="number" id="mf-remain-hours" class="input input--narrow" value="0" />
+                  </label>
+                  <label class="field">
+                    <span class="field__label">流失说明</span>
+                    <input type="text" id="mf-churn-note" class="input" />
+                  </label>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button type="button" class="btn btn--secondary" id="btn-member-cancel">取消</button>
+                <button type="button" class="btn btn--primary" id="btn-member-save">保存</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================== 教练管理 ==================== -->
+        <section id="panel-coaches" class="panel" data-panel-content="coaches" hidden>
+          <!-- Tab 切换 -->
+          <div class="coach-tabs">
+            <button type="button" class="coach-tab is-active" data-coach-tab="info">教练信息</button>
+            <button type="button" class="coach-tab" data-coach-tab="course">课时安排</button>
+            <button type="button" class="coach-tab" data-coach-tab="fee">课时费结算</button>
+          </div>
+
+          <!-- 教练信息 Tab -->
+          <div class="coach-tab-content" data-coach-tab-content="info">
+            <div class="member-toolbar">
+              <button type="button" class="btn btn--primary" id="btn-coach-add">+ 新增教练</button>
+              <button type="button" class="btn btn--primary" id="btn-coach-load">加载导入数据</button>
+              <button type="button" class="btn btn--secondary" id="btn-coach-export">导出</button>
+              <span id="coach-status" class="badge badge--muted">—</span>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table">
+                <thead>
+                  <tr>
+                    <th>ID</th><th>姓名</th><th>电话</th><th>职位</th><th>门店</th><th class="num-col">课时费单价</th><th class="num-col">分成比例</th><th>状态</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="coach-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 课时安排 Tab -->
+          <div class="coach-tab-content" data-coach-tab-content="course" hidden>
+            <div class="member-toolbar">
+              <label class="field field--inline">
+                <span class="field__label">月份</span>
+                <select id="coach-course-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="coach-course-month" class="input input--narrow"></select><span style="margin:0 2px">月</span>
+              </label>
+              <label class="field field--inline">
+                <span class="field__label">教练</span>
+                <select id="course-filter-coach" class="input"><option value="">全部</option></select>
+              </label>
+              <label class="field field--inline">
+                <span class="field__label">课程</span>
+                <select id="course-filter-name" class="input"><option value="">全部</option></select>
+              </label>
+              <button type="button" class="btn btn--primary" id="btn-course-query">查询</button>
+              <button type="button" class="btn btn--secondary" id="btn-course-add">+ 新增课程</button>
+              <button type="button" class="btn btn--secondary" id="btn-course-export">导出</button>
+              <span id="course-status" class="badge badge--muted">—</span>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table">
+                <thead>
+                  <tr>
+                    <th>ID</th><th>教练</th><th>课程</th><th>上课时间</th><th class="num-col">时长</th><th>约课人</th><th>会员卡</th><th>约课状态</th><th class="num-col">单课价值</th><th>课程状态</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="course-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 课时费结算 Tab -->
+          <div class="coach-tab-content" data-coach-tab-content="fee" hidden>
+            <div class="member-toolbar">
+              <label class="field field--inline">
+                <span class="field__label">月份</span>
+                <select id="coach-fee-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="coach-fee-month" class="input input--narrow"></select><span style="margin:0 2px">月</span>
+              </label>
+              <button type="button" class="btn btn--primary" id="btn-fee-query">查询</button>
+              <button type="button" class="btn btn--secondary" id="btn-fee-settle">批量结算</button>
+              <button type="button" class="btn btn--secondary" id="btn-fee-export">导出</button>
+              <span id="fee-status" class="badge badge--muted">—</span>
+            </div>
+            <div class="member-table-wrap">
+              <table class="member-table">
+                <thead>
+                  <tr>
+                    <th>ID</th><th>教练</th><th>课程</th><th>上课时间</th><th class="num-col">约课人数</th><th class="num-col">课时费</th><th>计算公式</th><th>状态</th><th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="fee-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 教练编辑弹窗 -->
+          <div id="coach-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head">
+                <h2 id="coach-modal-title" class="modal-title">新增教练</h2>
+                <button type="button" class="modal-close" id="btn-coach-modal-close">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="cf-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">姓名 *</span><input type="text" id="cf-name" class="input" /></label>
+                  <label class="field"><span class="field__label">电话</span><input type="text" id="cf-phone" class="input" /></label>
+                  <label class="field"><span class="field__label">职位</span>
+                    <select id="cf-position" class="input">
+                      <option value="教练">教练</option>
+                      <option value="店长">店长</option>
+                    </select>
+                  </label>
+                  <label class="field"><span class="field__label">门店</span><input type="text" id="cf-store" class="input" /></label>
+                  <label class="field"><span class="field__label">课时费单价</span><input type="number" id="cf-rate" class="input" step="0.01" /></label>
+                  <label class="field"><span class="field__label">分成比例(%)</span><input type="number" id="cf-ratio" class="input" value="50" step="0.01" /></label>
+                  <label class="field"><span class="field__label">状态</span>
+                    <select id="cf-status" class="input">
+                      <option value="1">在职</option>
+                      <option value="0">离职</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="field"><span class="field__label">资质证书</span><textarea id="cf-qual" class="input" rows="2"></textarea></label>
+                <!-- 薪资结构（仅编辑模式显示） -->
+                <div id="coach-salary-section" hidden style="margin-top:1rem;border-top:1px solid var(--border);padding-top:0.75rem">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+                    <span class="field__label" style="font-weight:600">薪资结构</span>
+                    <button type="button" class="btn btn--sm btn--primary" id="btn-add-coach-salary">新增薪资项</button>
+                  </div>
+                  <table class="member-table" id="coach-salary-table" style="margin-top:0">
+                    <thead>
+                      <tr>
+                        <th style="width:160px">薪资构成</th>
+                        <th style="width:140px">薪资额度</th>
+                        <th style="width:80px">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody id="coach-salary-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button type="button" class="btn btn--secondary" id="btn-coach-cancel">取消</button>
+                <button type="button" class="btn btn--primary" id="btn-coach-save">保存</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 课程编辑弹窗 -->
+          <div id="course-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head">
+                <h2 id="course-modal-title" class="modal-title">新增课程</h2>
+                <button type="button" class="modal-close" id="btn-course-modal-close">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="crs-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">教练 *</span><select id="crs-coach" class="input"></select></label>
+                  <label class="field"><span class="field__label">课程名称 *</span><input type="text" id="crs-name" class="input" /></label>
+                  <label class="field"><span class="field__label">上课时间 *</span><input type="datetime-local" id="crs-start" class="input" /></label>
+                  <label class="field"><span class="field__label">下课时间</span><input type="datetime-local" id="crs-end" class="input" /></label>
+                  <label class="field"><span class="field__label">时长(分钟)</span><input type="number" id="crs-duration" class="input" value="60" /></label>
+                  <label class="field"><span class="field__label">最大人数</span><input type="number" id="crs-max" class="input" value="0" /></label>
+                  <label class="field"><span class="field__label">单课价值</span><input type="number" id="crs-value" class="input" step="0.01" /></label>
+                  <label class="field"><span class="field__label">状态</span>
+                    <select id="crs-status" class="input">
+                      <option value="1">进行中</option>
+                      <option value="2">已结束</option>
+                      <option value="3">已取消</option>
+                    </select>
+                  </label>
+                </div>
+                <label class="field"><span class="field__label">课程详情</span><textarea id="crs-desc" class="input" rows="2"></textarea></label>
+              </div>
+              <div class="modal-foot">
+                <button type="button" class="btn btn--secondary" id="btn-course-cancel">取消</button>
+                <button type="button" class="btn btn--primary" id="btn-course-save">保存</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 约课详情弹窗 -->
+          <div id="booking-modal" class="modal-overlay" hidden>
+            <div class="modal-card" style="max-width:800px">
+              <div class="modal-head">
+                <h2 class="modal-title">约课详情</h2>
+                <button type="button" class="modal-close" id="btn-booking-modal-close" onclick="document.getElementById('booking-modal').hidden=true">&times;</button>
+              </div>
+              <div class="modal-body">
+                <div class="member-toolbar">
+                  <button type="button" class="btn btn--secondary" id="btn-booking-add">+ 新增约课</button>
+                  <button type="button" class="btn btn--secondary" id="btn-booking-calc">计算课时费</button>
+                </div>
+                <div id="booking-fee-info" class="booking-fee-info" hidden></div>
+                <div class="member-table-wrap">
+                  <table class="member-table">
+                    <thead>
+                      <tr><th>ID</th><th>约课人</th><th>会员卡</th><th>约课时间</th><th>状态</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="booking-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button type="button" class="btn btn--secondary" id="btn-booking-close" onclick="document.getElementById('booking-modal').hidden=true">关闭</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 约课编辑弹窗 -->
+          <div id="booking-edit-modal" class="modal-overlay" hidden>
+            <div class="modal-card" style="max-width:400px">
+              <div class="modal-head">
+                <h2 id="booking-edit-title" class="modal-title">新增约课</h2>
+                <button type="button" class="modal-close" id="btn-booking-edit-close">&times;</button>
+              </div>
+              <div class="modal-body">
+                <input type="hidden" id="bk-id" />
+                <input type="hidden" id="bk-course-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">约课人 *</span><input type="text" id="bk-name" class="input" /></label>
+                  <label class="field"><span class="field__label">会员卡</span><input type="text" id="bk-card" class="input" /></label>
+                  <label class="field"><span class="field__label">约课时间</span><input type="datetime-local" id="bk-time" class="input" /></label>
+                  <label class="field"><span class="field__label">状态</span>
+                    <select id="bk-status" class="input">
+                      <option value="1">已约</option>
+                      <option value="2">已签到</option>
+                      <option value="3">已取消</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button type="button" class="btn btn--secondary" id="btn-booking-edit-cancel">取消</button>
+                <button type="button" class="btn btn--primary" id="btn-booking-edit-save">保存</button>
+              </div>
+            </div>
+          </div>
+
+          <pre id="coach-out" class="output output--inline"></pre>
+        </section>
+
+        <!-- ====== 常规报表 ====== -->
+        <section id="panel-routine-teaching" class="panel" data-panel-content="routine-teaching" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="td-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="td-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-td-query">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-td-add">+ 新增</button>
+            <button type="button" class="btn btn--secondary" id="btn-td-export">导出</button>
+            <span id="td-status" class="badge badge--muted">—</span>
+          </div>
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead><tr><th>ID</th><th>教练</th><th>课程</th><th>上课日期</th><th class="num-col">时长</th><th class="num-col">学员数</th><th class="num-col">单课价值</th><th>操作</th></tr></thead>
+              <tbody id="td-tbody"></tbody>
+            </table>
+          </div>
+          <pre id="td-out" class="output output--inline"></pre>
+          <div id="td-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head"><h2 id="td-modal-title" class="modal-title">新增</h2><button type="button" class="modal-close" id="btn-td-modal-close" onclick="document.getElementById('td-modal').hidden=true">&times;</button></div>
+              <div class="modal-body">
+                <input type="hidden" id="f-td-tbody-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">教练</span><input type="text" id="f-td-tbody-coachName" class="input" /></label>
+                  <label class="field"><span class="field__label">课程</span><input type="text" id="f-td-tbody-courseName" class="input" /></label>
+                  <label class="field"><span class="field__label">上课日期</span><input type="date" id="f-td-tbody-classDate" class="input" /></label>
+                  <label class="field"><span class="field__label">上课时间</span><input type="time" id="f-td-tbody-startTime" class="input" /></label>
+                  <label class="field"><span class="field__label">时长(分钟)</span><input type="number" id="f-td-tbody-duration" class="input" value="60" /></label>
+                  <label class="field"><span class="field__label">学员数</span><input type="number" id="f-td-tbody-students" class="input" value="0" /></label>
+                  <label class="field"><span class="field__label">单课价值</span><input type="number" id="f-td-tbody-unitValue" class="input" step="0.01" /></label>
+                  <label class="field"><span class="field__label">备注</span><input type="text" id="f-td-tbody-remark" class="input" /></label>
+                </div>
+              </div>
+              <div class="modal-foot"><button type="button" class="btn btn--secondary" id="btn-td-cancel">取消</button><button type="button" class="btn btn--primary" id="btn-td-save">保存</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-routine-expense" class="panel" data-panel-content="routine-expense" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="de-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="de-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-de-query">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-de-add">+ 新增</button>
+            <button type="button" class="btn btn--secondary" id="btn-de-export">导出</button>
+            <span id="de-status" class="badge badge--muted">—</span>
+          </div>
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead><tr><th>ID</th><th>日期</th><th>支出类型</th><th>项目明细</th><th class="num-col">支出金额(元)</th><th>操作</th></tr></thead>
+              <tbody id="de-tbody"></tbody>
+            </table>
+          </div>
+          <pre id="de-out" class="output output--inline"></pre>
+          <div id="de-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head"><h2 id="de-modal-title" class="modal-title">新增</h2><button type="button" class="modal-close" id="btn-de-modal-close" onclick="document.getElementById('de-modal').hidden=true">&times;</button></div>
+              <div class="modal-body">
+                <input type="hidden" id="f-de-tbody-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">日期</span><input type="date" id="f-de-tbody-expenseDate" class="input" /></label>
+                  <label class="field"><span class="field__label">支出类型</span><input type="text" id="f-de-tbody-expenseType" class="input" /></label>
+                  <label class="field"><span class="field__label">项目明细</span><input type="text" id="f-de-tbody-project" class="input" /></label>
+                  <label class="field"><span class="field__label">支出金额(元)</span><input type="number" id="f-de-tbody-amount" class="input" step="0.01" /></label>
+                  <label class="field"><span class="field__label">备注</span><input type="text" id="f-de-tbody-remark" class="input" /></label>
+                </div>
+              </div>
+              <div class="modal-foot"><button type="button" class="btn btn--secondary" id="btn-de-cancel">取消</button><button type="button" class="btn btn--primary" id="btn-de-save">保存</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-routine-trial" class="panel" data-panel-content="routine-trial" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="tc-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="tc-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-tc-query">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-tc-add">+ 新增</button>
+            <button type="button" class="btn btn--secondary" id="btn-tc-export">导出</button>
+            <span id="tc-status" class="badge badge--muted">—</span>
+          </div>
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead><tr><th>ID</th><th>日期</th><th>体验课类型</th><th>体验课学员</th><th>来源</th><th class="num-col">体验课价值</th><th>教练</th><th>状态</th><th>操作</th></tr></thead>
+              <tbody id="tc-tbody"></tbody>
+            </table>
+          </div>
+          <pre id="tc-out" class="output output--inline"></pre>
+          <div id="tc-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head"><h2 id="tc-modal-title" class="modal-title">新增</h2><button type="button" class="modal-close" id="btn-tc-modal-close" onclick="document.getElementById('tc-modal').hidden=true">&times;</button></div>
+              <div class="modal-body">
+                <input type="hidden" id="f-tc-tbody-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">日期</span><input type="date" id="f-tc-tbody-classDate" class="input" /></label>
+                  <label class="field"><span class="field__label">体验课类型</span><input type="text" id="f-tc-tbody-trialType" class="input" /></label>
+                  <label class="field"><span class="field__label">体验课学员</span><input type="text" id="f-tc-tbody-studentName" class="input" /></label>
+                  <label class="field"><span class="field__label">来源</span><input type="text" id="f-tc-tbody-source" class="input" /></label>
+                  <label class="field"><span class="field__label">体验课价值</span><input type="number" id="f-tc-tbody-unitValue" class="input" step="0.01" /></label>
+                  <label class="field"><span class="field__label">教练</span><input type="text" id="f-tc-tbody-coachName" class="input" /></label>
+                  <label class="field"><span class="field__label">状态</span><select id="f-tc-tbody-status" class="input"><option value="1">待体验</option><option value="2">已体验</option><option value="3">已转化</option><option value="4">已流失</option></select></label>
+                  <label class="field"><span class="field__label">备注</span><input type="text" id="f-tc-tbody-remark" class="input" /></label>
+                </div>
+              </div>
+              <div class="modal-foot"><button type="button" class="btn btn--secondary" id="btn-tc-cancel">取消</button><button type="button" class="btn btn--primary" id="btn-tc-save">保存</button></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="panel-routine-leave" class="panel" data-panel-content="routine-leave" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="cl-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="cl-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-cl-query">查询</button>
+            <button type="button" class="btn btn--secondary" id="btn-cl-add">+ 新增</button>
+            <button type="button" class="btn btn--secondary" id="btn-cl-export">导出</button>
+            <span id="cl-status" class="badge badge--muted">—</span>
+          </div>
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead><tr><th>ID</th><th>教练</th><th>月份</th><th class="num-col">请假天数</th><th>操作</th></tr></thead>
+              <tbody id="cl-tbody"></tbody>
+            </table>
+          </div>
+          <pre id="cl-out" class="output output--inline"></pre>
+          <div id="cl-modal" class="modal-overlay" hidden>
+            <div class="modal-card">
+              <div class="modal-head"><h2 id="cl-modal-title" class="modal-title">新增</h2><button type="button" class="modal-close" id="btn-cl-modal-close" onclick="document.getElementById('cl-modal').hidden=true">&times;</button></div>
+              <div class="modal-body">
+                <input type="hidden" id="f-cl-tbody-id" />
+                <div class="form-grid">
+                  <label class="field"><span class="field__label">教练</span><input type="text" id="f-cl-tbody-coachName" class="input" /></label>
+                  <label class="field"><span class="field__label">月份</span><input type="text" id="f-cl-tbody-leaveMonth" class="input" placeholder="YYYY-MM" /></label>
+                  <label class="field"><span class="field__label">请假天数</span><input type="number" id="f-cl-tbody-leaveDays" class="input" step="0.5" /></label>
+                  <label class="field"><span class="field__label">备注</span><input type="text" id="f-cl-tbody-remark" class="input" /></label>
+                </div>
+              </div>
+              <div class="modal-foot"><button type="button" class="btn btn--secondary" id="btn-cl-cancel">取消</button><button type="button" class="btn btn--primary" id="btn-cl-save">保存</button></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 会员课时统计 -->
+        <section id="panel-routine-hours" class="panel" data-panel-content="routine-hours" hidden>
+          <div class="member-toolbar">
+            <label class="field field--inline"><span class="field__label">月份</span><select id="mh-year" class="input input--narrow"></select><span style="margin:0 2px">年</span><select id="mh-month" class="input input--narrow"></select><span style="margin:0 2px">月</span></label>
+            <button type="button" class="btn btn--primary" id="btn-mh-query">查询</button>
+            <button type="button" class="btn btn--primary" id="btn-mh-load">加载导入数据</button>
+            <button type="button" class="btn btn--secondary" id="btn-mh-export">导出</button>
+            <span id="mh-status" class="badge badge--muted">—</span>
+          </div>
+          <div class="member-table-wrap">
+            <table class="member-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>会员卡名称</th>
+                  <th>电话</th>
+                  <th>教练</th>
+                  <th class="num-col">上月初始课时</th>
+                  <th class="num-col">本月新增课时</th>
+                  <th class="num-col">本月消耗课时</th>
+                  <th class="num-col">剩余课时</th>
+                </tr>
+              </thead>
+              <tbody id="mh-tbody">
+                <tr><td colspan="8" class="member-empty">请选择月份后查询</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre id="mh-out" class="output output--inline"></pre>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
