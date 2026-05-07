@@ -58,7 +58,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          projectPath: ./demo-tauri
+          projectPath: demo-tauri
           args: ${{ matrix.args }}
           tagName: app-v__VERSION__
           releaseName: "财务报表助手 v__VERSION__"
