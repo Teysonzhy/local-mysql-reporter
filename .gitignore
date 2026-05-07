@@ -1,4 +1,19 @@
-node_modules
-dist
-src-tauri/target
+# Local secrets
+.env
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Future: Tauri / Rust
+/target/
+dist/
+*.log
+
+# Future: frontend
+node_modules/
+
+# Tauri demo
+demo-tauri/node_modules/
+demo-tauri/dist/
+demo-tauri/src-tauri/target/
