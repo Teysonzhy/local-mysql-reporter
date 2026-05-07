@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "财务报表助手",
+  "productName": "local-mysql-reporter",
   "version": "0.1.0",
   "identifier": "com.zhy.finance.reporter",
   "build": {
